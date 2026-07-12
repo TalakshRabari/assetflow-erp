@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AssetFlow - Enterprise Asset & Resource Management</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom Style Overrides -->
+    <link rel="stylesheet" href="/frontend/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen overflow-x-hidden">
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-5 right-5 flex flex-col gap-2.5 z-[9999]"></div>
+
+    <!-- MAIN APP WRAPPER (Hidden when logged out) -->
+    <div id="app-container" class="hidden min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-72 bg-white border-r border-slate-200 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
+            <div class="h-[70px] flex items-center px-6 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-cube text-blue-600 text-2xl"></i>
+                    <span class="font-heading text-xl font-extrabold text-slate-800">Asset<span class="text-emerald-500">Flow</span></span>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 flex items-center gap-3 border-b border-slate-100 bg-slate-50/50">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white text-lg shadow-sm" id="sidebar-avatar">U</div>
+                <div class="flex flex-col min-w-0">
+                    <div class="font-semibold text-sm text-slate-800 truncate" id="sidebar-user-name">Guest User</div>
+                    <div class="text-xs text-slate-500 truncate" id="sidebar-user-role">Employee</div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 py-6 flex flex-col gap-1 overflow-y-auto">
+                <a href="#dashboard" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-line text-lg w-5 text-center"></i><span>Dashboard</span>
+                </a>
+                <a href="#assets" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-assets">
+                    <i class="fa-solid fa-laptop text-lg w-5 text-center"></i><span>Asset Directory</span>
+                </a>
+                <a href="#allocations" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-allocations">
+                    <i class="fa-solid fa-handshake text-lg w-5 text-center"></i><span>Allocations</span>
+                </a>
+                <a href="#bookings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-bookings">
+                    <i class="fa-solid fa-calendar-days text-lg w-5 text-center"></i><span>Resource Booking</span>
+                </a>
+                <a href="#maintenance" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-maintenance">
+                    <i class="fa-solid fa-screwdriver-wrench text-lg w-5 text-center"></i><span>Maintenance</span>
+                </a>
+                <a href="#audits" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-audits">
+                    <i class="fa-solid fa-clipboard-check text-lg w-5 text-center"></i><span>Audits</span>
+                </a>
+                <a href="#org-setup" class="nav-item admin-only flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-org-setup">
+                    <i class="fa-solid fa-sitemap text-lg w-5 text-center"></i><span>Org Setup</span>
+                </a>
+                <a href="#reports" class="nav-item manager-only flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-reports">
+                    <i class="fa-solid fa-chart-pie text-lg w-5 text-center"></i><span>Reports & Analytics</span>
+                </a>
+                <a href="#notifications" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-notifications">
+                    <i class="fa-solid fa-bell text-lg w-5 text-center"></i><span>Notifications</span>
+                    <span class="ml-auto bg-red-500 text-white font-bold text-xxs px-2 py-0.5 rounded-full hidden" id="notif-badge">0</span>
+                </a>
+                <a href="#logs" class="nav-item admin-only flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-sm font-medium" id="nav-logs">
+                    <i class="fa-solid fa-clock-rotate-left text-lg w-5 text-center"></i><span>Activity Logs</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50/30">
+                <button id="logout-btn" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-all font-semibold text-sm">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Body Wrapper -->
+        <main id="main-content" class="ml-72 flex-1 p-8 flex flex-col gap-6 min-h-screen transition-all duration-300">
+            <header id="top-bar" class="flex justify-between items-center pb-5 border-b border-slate-200">
+                <div class="page-title-section">
+                    <h1 id="current-view-title" class="font-heading text-2xl font-bold text-slate-800">Dashboard</h1>
+                </div>
+                <div class="quick-stats-bar text-sm font-semibold text-slate-500 bg-white border border-slate-200 px-4 py-1.5 rounded-full shadow-sm">
+                    <i class="fa-regular fa-clock text-blue-500 mr-1.5"></i><span id="system-time">2026-07-12 12:00</span>
+                </div>
+            </header>
+
+            <div class="view-container flex-1">
+                <!-- VIEW 1: DASHBOARD -->
+                <section id="dashboard-view" class="content-view flex flex-col gap-6">
+                    <div class="dashboard-kpis grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+                        <div class="kpi-card bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div class="kpi-icon w-12 h-12 rounded-xl flex items-center justify-center text-lg bg-blue-50 text-blue-600"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Available Assets</span>
+                                <span class="text-2xl font-bold text-slate-800 font-heading mt-0.5" id="kpi-available">0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div class="kpi-icon w-12 h-12 rounded-xl flex items-center justify-center text-lg bg-emerald-50 text-emerald-600"><i class="fa-solid fa-handshake"></i></div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Allocated Assets</span>
+                                <span class="text-2xl font-bold text-slate-800 font-heading mt-0.5" id="kpi-allocated">0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div class="kpi-icon w-12 h-12 rounded-xl flex items-center justify-center text-lg bg-orange-50 text-orange-600"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Maintenance Today</span>
+                                <span class="text-2xl font-bold text-slate-800 font-heading mt-0.5" id="kpi-maintenance">0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div class="kpi-icon w-12 h-12 rounded-xl flex items-center justify-center text-lg bg-purple-50 text-purple-600"><i class="fa-solid fa-calendar-check"></i></div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Bookings</span>
+                                <span class="text-2xl font-bold text-slate-800 font-heading mt-0.5" id="kpi-bookings">0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div class="kpi-icon w-12 h-12 rounded-xl flex items-center justify-center text-lg bg-indigo-50 text-indigo-600"><i class="fa-solid fa-arrows-spin"></i></div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Pending Transfers</span>
+                                <span class="text-2xl font-bold text-slate-800 font-heading mt-0.5" id="kpi-transfers">0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-200">
+                            <div class="kpi-icon w-12 h-12 rounded-xl flex items-center justify-center text-lg bg-pink-50 text-pink-600"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <div class="flex flex-col">
+                                <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Upcoming Returns</span>
+                                <span class="text-2xl font-bold text-slate-800 font-heading mt-0.5" id="kpi-upcoming">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overdue Allocations Banner -->
+                    <div id="overdue-banner" class="alert-banner bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-4 rounded-xl flex justify-between items-center shadow-sm hidden">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xl"></i>
+                            <div>
+                                <strong>Overdue Returns Alert:</strong> There are <span id="overdue-count" class="font-bold">0</span> asset allocations currently past their return date.
+                            </div>
+                        </div>
+                        <a href="#allocations" class="btn bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-700 transition-all">Review</a>
+                    </div>
+
+                    <!-- Quick Actions & Dashboard Lists -->
+                    <div class="dashboard-grid grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
+                        <div class="dash-panel bg-white border border-slate-200 rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
+                            <h3 class="font-heading text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">Quick Operations</h3>
+                            <div class="quick-actions flex flex-col gap-3">
+                                <button class="btn manager-only w-full bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200/50 py-3 rounded-xl font-bold transition-all text-sm text-center" onclick="app.showModal('register-asset-modal')">
+                                    <i class="fa-solid fa-plus mr-1.5"></i> Register Asset
+                                </button>
+                                <button class="btn w-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200/50 py-3 rounded-xl font-bold transition-all text-sm text-center" onclick="location.hash='#bookings'">
+                                    <i class="fa-solid fa-calendar-plus mr-1.5"></i> Book Shared Resource
+                                </button>
+                                <button class="btn w-full bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200/50 py-3 rounded-xl font-bold transition-all text-sm text-center" onclick="app.showModal('maintenance-request-modal')">
+                                    <i class="fa-solid fa-hammer mr-1.5"></i> Raise Maintenance
+                                </button>
+                            </div>
+                        </div>
+                        <div class="dash-panel bg-white border border-slate-200 rounded-2xl p-6 flex flex-col gap-4 shadow-sm">
+                            <h3 class="font-heading text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">Upcoming / Overdue Returns</h3>
+                            <div class="overflow-x-auto w-full border border-slate-100 rounded-xl">
+                                <table id="dash-returns-table" class="w-full text-left text-sm">
+                                    <thead>
+                                        <tr class="bg-slate-50/80 text-slate-500 font-heading border-b border-slate-100">
+                                            <th class="p-3">Asset</th>
+                                            <th class="p-3">Holder</th>
+                                            <th class="p-3">Due Date</th>
+                                            <th class="p-3">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr><td colspan="4" class="p-4 text-center text-slate-400">Loading return states...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: ASSET DIRECTORY -->
+                <section id="assets-view" class="content-view flex flex-col gap-6 hidden">
+                    <div class="view-actions-bar flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+                        <div class="search-filters flex flex-1 flex-col sm:flex-row gap-3 max-w-3xl">
+                            <div class="search-box relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="asset-search-input" placeholder="Search by tag, name, serial or location..." class="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-800 focus:border-blue-500 focus:outline-none transition-all shadow-sm">
+                            </div>
+                            <select id="asset-filter-category" class="bg-white border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 focus:border-blue-500 focus:outline-none cursor-pointer shadow-sm">
+                                <option value="">All Categories</option>
+                            </select>
+                            <select id="asset-filter-status" class="bg-white border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 focus:border-blue-500 focus:outline-none cursor-pointer shadow-sm">
+                                <option value="">All Statuses</option>
+                                <option value="Available">Available</option>
+                                <option value="Allocated">Allocated</option>
+                                <option value="Reserved">Reserved</option>
+                                <option value="Under Maintenance">Under Maintenance</option>
+                                <option value="Lost">Lost</option>
+                                <option value="Retired">Retired</option>
+                                <option value="Disposed">Disposed</option>
+                            </select>
+                        </div>
+                        <button class="btn manager-only bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2" onclick="app.showModal('register-asset-modal')">
+                            <i class="fa-solid fa-plus"></i> Register Asset
+                        </button>
+                    </div>
+
+                    <div class="asset-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="asset-cards-container">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </section>
+
+                <!-- VIEW 3: ALLOCATIONS -->
+                <section id="allocations-view" class="content-view flex flex-col gap-6 hidden">
+                    <div class="view-actions-bar border-b border-slate-200 pb-2">
+                        <div class="tab-selectors bg-slate-100/80 p-1 rounded-xl flex gap-1 w-fit border border-slate-200">
+                            <button class="tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all" onclick="app.toggleAllocSubView('active-allocs')">Active Allocations</button>
+                            <button class="tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-500" onclick="app.toggleAllocSubView('transfer-reqs')">Transfer Requests</button>
+                        </div>
+                    </div>
+
+                    <!-- SUBVIEW A: Active Allocations -->
+                    <div id="allocs-active-subview" class="subview w-full">
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="allocations-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Asset Tag</th>
+                                        <th class="p-4">Asset Name</th>
+                                        <th class="p-4">Assigned To</th>
+                                        <th class="p-4">Allocated By</th>
+                                        <th class="p-4">Allocation Date</th>
+                                        <th class="p-4">Expected Return</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 manager-only">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUBVIEW B: Transfer Requests -->
+                    <div id="allocs-transfers-subview" class="subview hidden w-full">
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="transfers-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Asset</th>
+                                        <th class="p-4">Requested By</th>
+                                        <th class="p-4">Target Holder</th>
+                                        <th class="p-4">Request Date</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: RESOURCE BOOKING -->
+                <section id="bookings-view" class="content-view flex flex-col gap-6 hidden">
+                    <div class="booking-layout grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
+                        <div class="booking-sidebar bg-white border border-slate-200 rounded-2xl p-6 flex flex-col gap-5 shadow-sm">
+                            <h3 class="font-heading text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">Book a Resource</h3>
+                            <form id="booking-form" class="flex flex-col gap-4">
+                                <div class="form-group flex flex-col gap-1.5">
+                                    <label for="book-resource-select" class="text-xs font-semibold text-slate-500">Select Resource</label>
+                                    <select id="book-resource-select" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none" required></select>
+                                </div>
+                                <div class="form-group flex flex-col gap-1.5">
+                                    <label for="book-start-time" class="text-xs font-semibold text-slate-500">Start Time</label>
+                                    <input type="datetime-local" id="book-start-time" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none" required>
+                                </div>
+                                <div class="form-group flex flex-col gap-1.5">
+                                    <label for="book-end-time" class="text-xs font-semibold text-slate-500">End Time</label>
+                                    <input type="datetime-local" id="book-end-time" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none" required>
+                                </div>
+                                <div class="form-group dept-head-only flex flex-col gap-1.5">
+                                    <label for="book-dept-select" class="text-xs font-semibold text-slate-500">Book on behalf of Department</label>
+                                    <select id="book-dept-select" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                                        <option value="">No Department</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all text-sm">Confirm Booking</button>
+                            </form>
+                        </div>
+                        
+                        <div class="booking-calendar-panel bg-white border border-slate-200 rounded-2xl p-6 flex flex-col gap-5 shadow-sm">
+                            <div class="calendar-header flex justify-between items-center border-b border-slate-100 pb-3">
+                                <h3 id="calendar-title" class="font-heading text-lg font-bold text-slate-800">Reservations Timeline</h3>
+                                <div class="calendar-legend flex gap-4 text-xs font-semibold">
+                                    <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span> Upcoming</span>
+                                    <span class="flex items-center gap-1.5 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Ongoing</span>
+                                </div>
+                            </div>
+                            <div id="booking-timeline" class="timeline-container flex flex-col gap-4 overflow-y-auto max-h-[550px] divide-y divide-slate-100">
+                                <!-- Loaded dynamically via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: MAINTENANCE -->
+                <section id="maintenance-view" class="content-view flex flex-col gap-6 hidden">
+                    <div class="view-actions-bar flex justify-between items-center">
+                        <h3 class="font-heading text-lg font-bold text-slate-800">Repair Requests</h3>
+                        <button class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2" onclick="app.showModal('maintenance-request-modal')">
+                            <i class="fa-solid fa-hammer"></i> Raise Maintenance
+                        </button>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <table id="maintenance-table" class="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                    <th class="p-4">Asset</th>
+                                    <th class="p-4">Raised By</th>
+                                    <th class="p-4">Priority</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Description</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Technician</th>
+                                    <th class="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: AUDITS -->
+                <section id="audits-view" class="content-view flex flex-col gap-6 hidden">
+                    <div class="view-actions-bar flex justify-between items-center border-b border-slate-200 pb-2">
+                        <div class="tab-selectors bg-slate-100/85 p-1 rounded-xl flex gap-1 w-fit border border-slate-200">
+                            <button class="tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all" onclick="app.toggleAuditSubView('audit-cycles')">Audit Cycles</button>
+                            <button class="tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hidden" id="audit-items-tab" onclick="app.toggleAuditSubView('audit-items')">Current Cycle Items</button>
+                        </div>
+                        <button class="btn admin-only bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2" onclick="app.showModal('create-audit-modal')">
+                            <i class="fa-solid fa-plus"></i> Create Audit Cycle
+                        </button>
+                    </div>
+
+                    <!-- SUBVIEW A: Audit Cycles -->
+                    <div id="audit-cycles-subview" class="subview w-full">
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="audit-cycles-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Cycle Name</th>
+                                        <th class="p-4">Start Date</th>
+                                        <th class="p-4">End Date</th>
+                                        <th class="p-4">Location/Dept Scope</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUBVIEW B: Audit Items checklist -->
+                    <div id="audit-items-subview" class="subview hidden flex flex-col gap-6 w-full">
+                        <div class="audit-session-info bg-white border border-slate-200 p-5 rounded-2xl flex justify-between items-center shadow-sm">
+                            <div>
+                                <h4 id="session-cycle-name" class="font-heading text-lg font-bold text-slate-800">Year-End Audit</h4>
+                                <p id="session-cycle-scope" class="text-xs font-semibold text-slate-500 mt-1">Scope: Electronics | Location: Floor 2</p>
+                            </div>
+                            <button class="btn manager-only bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm" id="close-cycle-btn">Close Cycle & Commit</button>
+                        </div>
+
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="audit-items-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Asset Tag</th>
+                                        <th class="p-4">Asset Name</th>
+                                        <th class="p-4">Serial Number</th>
+                                        <th class="p-4">Current Condition</th>
+                                        <th class="p-4">Status Label</th>
+                                        <th class="p-4">Audit Status</th>
+                                        <th class="p-4">Auditor Notes</th>
+                                        <th class="p-4">Verification Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 7: ORG SETUP (Admin only) -->
+                <section id="org-setup-view" class="content-view flex flex-col gap-6 hidden admin-only">
+                    <div class="org-setup-tabs bg-slate-100/80 p-1 rounded-xl flex gap-1 w-fit border border-slate-200">
+                        <button class="org-tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all active bg-white text-blue-600 shadow-sm" onclick="app.toggleOrgTab('departments-tab')">Departments</button>
+                        <button class="org-tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-500" onclick="app.toggleOrgTab('categories-tab')">Asset Categories</button>
+                        <button class="org-tab-btn px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-500" onclick="app.toggleOrgTab('employees-tab')">Employee Directory</button>
+                    </div>
+
+                    <!-- Tab A: Department Management -->
+                    <div id="departments-tab" class="org-tab-content w-full flex flex-col gap-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-heading text-lg font-bold text-slate-800">Department Setup</h3>
+                            <button class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm" onclick="app.showModal('create-department-modal')">
+                                <i class="fa-solid fa-plus mr-1"></i> Add Department
+                            </button>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="departments-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Name</th>
+                                        <th class="p-4">Department Head</th>
+                                        <th class="p-4">Parent Department</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab B: Asset Category Management -->
+                    <div id="categories-tab" class="org-tab-content hidden w-full flex flex-col gap-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-heading text-lg font-bold text-slate-800">Asset Categories</h3>
+                            <button class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm" onclick="app.showModal('create-category-modal')">
+                                <i class="fa-solid fa-plus mr-1"></i> Add Category
+                            </button>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="categories-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Category Name</th>
+                                        <th class="p-4">Custom Schema Fields</th>
+                                        <th class="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab C: Employee Directory -->
+                    <div id="employees-tab" class="org-tab-content hidden w-full flex flex-col gap-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-heading text-lg font-bold text-slate-800">Employee Directory</h3>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <table id="employees-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-4">Name</th>
+                                        <th class="p-4">Email</th>
+                                        <th class="p-4">Department</th>
+                                        <th class="p-4">Current Role</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4">Promote Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 8: REPORTS & ANALYTICS -->
+                <section id="reports-view" class="content-view hidden manager-only flex flex-col gap-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-heading text-lg font-bold text-slate-800">Actionable Insights</h3>
+                        <button class="btn bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 text-sm font-semibold py-2 px-4 rounded-xl shadow-sm transition-all" id="csv-export-btn"><i class="fa-solid fa-download mr-1"></i> Export Data CSV</button>
+                    </div>
+                    <div class="reports-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="report-card bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                            <h4 class="font-heading text-sm font-bold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Asset Utilization</h4>
+                            <div class="chart-mock h-[180px] flex items-end gap-5 py-4 border-b border-l border-slate-200 ml-4 mb-1" id="chart-utilization">
+                                <!-- Mock CSS Chart -->
+                            </div>
+                        </div>
+                        <div class="report-card bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                            <h4 class="font-heading text-sm font-bold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Maintenance by Category</h4>
+                            <div class="chart-mock h-[180px] flex items-end gap-5 py-4 border-b border-l border-slate-200 ml-4 mb-1" id="chart-maintenance"></div>
+                        </div>
+                        <div class="report-card bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                            <h4 class="font-heading text-sm font-bold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Department-wise Allocation</h4>
+                            <div class="chart-mock h-[180px] flex items-end gap-5 py-4 border-b border-l border-slate-200 ml-4 mb-1" id="chart-departments"></div>
+                        </div>
+                        <div class="report-card bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                            <h4 class="font-heading text-sm font-bold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Booking Heatmap (Hours)</h4>
+                            <div class="chart-mock h-[180px] flex items-end gap-5 py-4 border-b border-l border-slate-200 ml-4 mb-1" id="chart-heatmap"></div>
+                        </div>
+                    </div>
+
+                    <!-- Assets Due for Maintenance or Nearing Retirement Section -->
+                    <div class="report-card bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                        <h4 class="font-heading text-sm font-bold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2 mb-4">Assets Nearing Retirement or Due for Maintenance</h4>
+                        <div class="overflow-x-auto w-full border border-slate-100 rounded-xl">
+                            <table id="retirement-maintenance-table" class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                        <th class="p-3">Asset</th>
+                                        <th class="p-3">Category</th>
+                                        <th class="p-3">Acquisition Date</th>
+                                        <th class="p-3">Condition</th>
+                                        <th class="p-3">Current Status</th>
+                                        <th class="p-3">Flag Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="6" class="p-4 text-center text-slate-400 font-semibold">Loading lifecycles...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 9: NOTIFICATIONS -->
+                <section id="notifications-view" class="content-view hidden">
+                    <div class="flex flex-col gap-3" id="notifications-container">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </section>
+
+                <!-- VIEW 10: ACTIVITY LOGS (Admin only) -->
+                <section id="logs-view" class="content-view hidden admin-only">
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <table id="logs-table" class="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-heading font-semibold">
+                                    <th class="p-4">Timestamp</th>
+                                    <th class="p-4">User</th>
+                                    <th class="p-4">Action</th>
+                                    <th class="p-4">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- LOGOUT CONTAINER (Login / Signup screen) -->
+    <div id="auth-container" class="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+        <div class="auth-box w-full max-w-md bg-white border border-slate-200/80 p-8 rounded-2xl shadow-xl flex flex-col gap-6">
+            <div class="auth-header text-center flex flex-col items-center gap-1.5">
+                <i class="fa-solid fa-cube text-blue-600 text-4xl mb-1"></i>
+                <h2 class="font-heading text-2xl font-extrabold text-slate-800">AssetFlow</h2>
+                <p class="text-sm font-semibold text-slate-400">Enterprise Asset & Resource Management</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="login-email" class="text-xs font-semibold text-slate-500">Email Address</label>
+                    <input type="email" id="login-email" required placeholder="name@company.com" class="border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 bg-slate-50/50 focus:border-blue-500 focus:bg-white focus:outline-none transition-all">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="login-password" class="text-xs font-semibold text-slate-500">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 bg-slate-50/50 focus:border-blue-500 focus:bg-white focus:outline-none transition-all">
+                </div>
+                <div class="flex justify-between items-center text-xs font-semibold text-slate-400 mt-1">
+                    <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input type="checkbox" class="rounded text-blue-600 border-slate-300"> Remember me
+                    </label>
+                    <a href="#" onclick="app.showForgotPasswordModal(event)" class="text-blue-600 hover:underline">Forgot Password?</a>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all text-sm mt-2">Log In</button>
+                <div class="auth-footer text-xs font-semibold text-slate-400 text-center mt-2">
+                    Don't have an account? <a href="#" id="show-signup-btn" class="text-blue-600 hover:underline">Request Account</a>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="hidden flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="signup-name" class="text-xs font-semibold text-slate-500">Full Name</label>
+                    <input type="text" id="signup-name" required placeholder="John Doe" class="border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 bg-slate-50/50 focus:border-blue-500 focus:bg-white focus:outline-none transition-all">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="signup-email" class="text-xs font-semibold text-slate-500">Email Address</label>
+                    <input type="email" id="signup-email" required placeholder="john.doe@company.com" class="border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 bg-slate-50/50 focus:border-blue-500 focus:bg-white focus:outline-none transition-all">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="signup-password" class="text-xs font-semibold text-slate-500">Password</label>
+                    <input type="password" id="signup-password" required placeholder="Min 6 characters" class="border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 bg-slate-50/50 focus:border-blue-500 focus:bg-white focus:outline-none transition-all">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="signup-dept" class="text-xs font-semibold text-slate-500">Department</label>
+                    <select id="signup-dept" class="bg-white border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 focus:border-blue-500 focus:outline-none cursor-pointer shadow-sm">
+                        <option value="">No Department / Setup Later</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md transition-all text-sm mt-2">Register</button>
+                <div class="auth-footer text-xs font-semibold text-slate-400 text-center mt-2">
+                    Already have an account? <a href="#" id="show-login-btn" class="text-blue-600 hover:underline">Log In</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL OVERLAYS
+         ========================================== -->
+
+    <!-- Modal 1: Register Asset -->
+    <div class="modal" id="register-asset-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Register Asset</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('register-asset-modal')">&times;</span>
+            </div>
+            <form id="register-asset-form" class="flex flex-col gap-4">
+                <div class="modal-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-name" class="text-xs font-semibold text-slate-500">Asset Name</label>
+                        <input type="text" id="asset-name" required placeholder="e.g. MacBook Pro 16" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-category" class="text-xs font-semibold text-slate-500">Category</label>
+                        <select id="asset-category" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none" required></select>
+                    </div>
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-serial" class="text-xs font-semibold text-slate-500">Serial Number</label>
+                        <input type="text" id="asset-serial" placeholder="e.g. C02X8812JJK" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-cost" class="text-xs font-semibold text-slate-500">Acquisition Cost ($)</label>
+                        <input type="number" step="0.01" id="asset-cost" placeholder="0.00" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-date" class="text-xs font-semibold text-slate-500">Acquisition Date</label>
+                        <input type="date" id="asset-date" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-location" class="text-xs font-semibold text-slate-500">Location</label>
+                        <input type="text" id="asset-location" placeholder="e.g. HQ - Floor 3" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="form-group flex flex-col gap-1.5">
+                        <label for="asset-condition" class="text-xs font-semibold text-slate-500">Condition</label>
+                        <select id="asset-condition" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                            <option value="New">New</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Poor">Poor</option>
+                            <option value="Damaged">Damaged</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex items-center gap-2 mt-4">
+                        <input type="checkbox" id="asset-bookable" class="w-4.5 h-4.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                        <label for="asset-bookable" class="text-xs font-semibold text-slate-600 cursor-pointer">Shared Bookable Resource</label>
+                    </div>
+                </div>
+
+                <!-- Custom Category fields -->
+                <div id="custom-fields-area" class="flex flex-col gap-4"></div>
+
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="asset-photo" class="text-xs font-semibold text-slate-500">Upload Asset Photo</label>
+                    <input type="file" id="asset-photo" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    <input type="hidden" id="asset-photo-url">
+                </div>
+
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('register-asset-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Save Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Allocate Asset -->
+    <div class="modal" id="allocate-asset-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Allocate Asset</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('allocate-asset-modal')">&times;</span>
+            </div>
+            <form id="allocate-asset-form" class="flex flex-col gap-4">
+                <input type="hidden" id="alloc-asset-id">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-500">Selected Asset</label>
+                    <input type="text" id="alloc-asset-name" readonly class="border border-slate-100 rounded-xl py-2 px-3 text-sm text-slate-500 bg-slate-50/50 cursor-not-allowed">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="alloc-target-type" class="text-xs font-semibold text-slate-500">Allocate To</label>
+                    <select id="alloc-target-type" onchange="app.toggleAllocTarget(this.value)" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="user">Employee</option>
+                        <option value="dept">Department</option>
+                    </select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5" id="alloc-user-group">
+                    <label for="alloc-user-select" class="text-xs font-semibold text-slate-500">Employee</label>
+                    <select id="alloc-user-select" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"></select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5 hidden" id="alloc-dept-group">
+                    <label for="alloc-dept-select" class="text-xs font-semibold text-slate-500">Department</label>
+                    <select id="alloc-dept-select" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"></select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="alloc-return-date" class="text-xs font-semibold text-slate-500">Expected Return Date (Optional)</label>
+                    <input type="date" id="alloc-return-date" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('allocate-asset-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Confirm Allocation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Return Asset -->
+    <div class="modal" id="return-asset-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Process Return Check-in</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('return-asset-modal')">&times;</span>
+            </div>
+            <form id="return-asset-form" class="flex flex-col gap-4">
+                <input type="hidden" id="return-alloc-id">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-slate-500">Returning Asset</label>
+                    <input type="text" id="return-asset-name" readonly class="border border-slate-100 rounded-xl py-2 px-3 text-sm text-slate-500 bg-slate-50/50 cursor-not-allowed">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="return-notes" class="text-xs font-semibold text-slate-500">Check-in Condition / Notes</label>
+                    <textarea id="return-notes" placeholder="Condition verified: note scratches, damages if any..." required class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none h-24 resize-none"></textarea>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="return-condition" class="text-xs font-semibold text-slate-500">Update Condition</label>
+                    <select id="return-condition" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="New">New</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Poor">Poor</option>
+                        <option value="Damaged">Damaged</option>
+                    </select>
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('return-asset-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Complete Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Raise Maintenance Request -->
+    <div class="modal" id="maintenance-request-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Raise Repair Request</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('maintenance-request-modal')">&times;</span>
+            </div>
+            <form id="maintenance-request-form" class="flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-asset-select" class="text-xs font-semibold text-slate-500">Select Asset</label>
+                    <select id="maint-asset-select" required class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"></select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-priority" class="text-xs font-semibold text-slate-500">Priority</label>
+                    <select id="maint-priority" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="Low">Low</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-desc" class="text-xs font-semibold text-slate-500">Describe the Issue</label>
+                    <textarea id="maint-desc" placeholder="Details of malfunction, physical damage..." required class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none h-24 resize-none"></textarea>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-photo" class="text-xs font-semibold text-slate-500">Attach Photo</label>
+                    <input type="file" id="maint-photo" accept="image/*" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    <input type="hidden" id="maint-photo-url">
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('maintenance-request-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: Assign Technician / Update Maintenance -->
+    <div class="modal" id="update-maintenance-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Process Repair Ticket</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('update-maintenance-modal')">&times;</span>
+            </div>
+            <form id="update-maintenance-form" class="flex flex-col gap-4">
+                <input type="hidden" id="maint-ticket-id">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-assign-tech" class="text-xs font-semibold text-slate-500">Assign Technician</label>
+                    <select id="maint-assign-tech" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none"></select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-status-select" class="text-xs font-semibold text-slate-500">Work Status</label>
+                    <select id="maint-status-select" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="Approved">Approved (Awaiting Repair)</option>
+                        <option value="Tech Assigned">Tech Assigned</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved (Complete)</option>
+                    </select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="maint-notes" class="text-xs font-semibold text-slate-500">Resolution Notes</label>
+                    <textarea id="maint-notes" placeholder="Technician work notes..." class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none h-24 resize-none"></textarea>
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('update-maintenance-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Update Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 6: Create Audit Cycle -->
+    <div class="modal" id="create-audit-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Create Audit Cycle</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('create-audit-modal')">&times;</span>
+            </div>
+            <form id="create-audit-form" class="flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="audit-name" class="text-xs font-semibold text-slate-500">Cycle Name</label>
+                    <input type="text" id="audit-name" required placeholder="e.g. Q3 Inventory Check" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="audit-dept" class="text-xs font-semibold text-slate-500">Scope: Department (Optional)</label>
+                    <select id="audit-dept" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="">All Departments</option>
+                    </select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="audit-location" class="text-xs font-semibold text-slate-500">Scope: Location (Optional)</label>
+                    <input type="text" id="audit-location" placeholder="e.g. HQ - Floor 2" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="audit-start" class="text-xs font-semibold text-slate-500">Start Date</label>
+                    <input type="date" id="audit-start" required class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="audit-end" class="text-xs font-semibold text-slate-500">End Date</label>
+                    <input type="date" id="audit-end" required class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('create-audit-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Initialize Audit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 7: Create Department -->
+    <div class="modal" id="create-department-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Add Department</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('create-department-modal')">&times;</span>
+            </div>
+            <form id="create-department-form" class="flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="dept-name" class="text-xs font-semibold text-slate-500">Department Name</label>
+                    <input type="text" id="dept-name" required placeholder="e.g. Engineering" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="dept-head" class="text-xs font-semibold text-slate-500">Assign Department Head (Optional)</label>
+                    <select id="dept-head" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="">No Head Assigned</option>
+                    </select>
+                </div>
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="dept-parent" class="text-xs font-semibold text-slate-500">Parent Department (Optional)</label>
+                    <select id="dept-parent" class="bg-white border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                        <option value="">No Parent Department</option>
+                    </select>
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('create-department-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Create Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 8: Create Asset Category -->
+    <div class="modal" id="create-category-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Add Asset Category</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('create-category-modal')">&times;</span>
+            </div>
+            <form id="create-category-form" class="flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="cat-name" class="text-xs font-semibold text-slate-500">Category Name</label>
+                    <input type="text" id="cat-name" required placeholder="e.g. Electronics, Office Chairs" class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                
+                <div class="form-group flex flex-col gap-2">
+                    <label class="text-xs font-semibold text-slate-500">Custom Attributes Schema</label>
+                    <div id="custom-fields-builder" class="flex flex-col gap-2">
+                        <!-- Attributes added dynamically here -->
+                    </div>
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 rounded-xl border border-slate-200/50 mt-1" onclick="app.addSchemaFieldRow()">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Custom Attribute Field
+                    </button>
+                </div>
+
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('create-category-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 9: Asset Details & History -->
+    <div class="modal" id="asset-details-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Asset Details</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('asset-details-modal')">&times;</span>
+            </div>
+            <div class="details-layout grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 items-start">
+                <div class="details-left flex flex-col gap-4 border-r border-slate-100 pr-0 md:pr-6">
+                    <div class="detail-photo-container w-full h-[180px] rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center bg-slate-50">
+                        <img id="detail-asset-photo" src="" alt="Asset Image" class="w-full h-full object-cover hidden">
+                        <div id="detail-asset-photo-placeholder" class="text-slate-300 text-5xl"><i class="fa-solid fa-image"></i></div>
+                    </div>
+                    <!-- QR Code Scanner Mock -->
+                    <div class="qr-code-box flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-xl p-3 bg-slate-50/50 mt-1 select-none">
+                        <img id="detail-asset-qr" src="" alt="QR Code" class="w-20 h-20 bg-white border border-slate-200 p-1 rounded-lg">
+                        <span class="text-[10px] text-slate-400 font-semibold mt-1">Scan Asset Tag (QR)</span>
+                    </div>
+                    <h2 id="detail-asset-name" class="font-heading text-xl font-bold text-slate-800">Laptop</h2>
+                    <span class="status-badge" id="detail-asset-status">Available</span>
+                    <div class="detail-tag-serial flex items-center gap-3">
+                        <span class="tag-badge bg-slate-100 border border-slate-200 rounded px-2 py-0.5 text-xs font-mono font-bold" id="detail-asset-tag">AF-0001</span>
+                        <span class="serial-text text-xs font-semibold text-slate-400" id="detail-asset-serial">SN: -</span>
+                    </div>
+                    
+                    <div class="detail-meta flex flex-col gap-2 text-xs font-semibold text-slate-500 mt-2">
+                        <div>Category: <span id="detail-asset-cat" class="text-slate-800">-</span></div>
+                        <div>Condition: <span id="detail-asset-condition" class="text-slate-800">-</span></div>
+                        <div>Location: <span id="detail-asset-location" class="text-slate-800">-</span></div>
+                        <div>Acquisition Cost: <span id="detail-asset-cost" class="text-slate-800">-</span></div>
+                        <div>Acquisition Date: <span id="detail-asset-date" class="text-slate-800">-</span></div>
+                    </div>
+
+                    <!-- Custom fields summary -->
+                    <div id="detail-custom-fields" class="detail-custom-box bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2 hidden">
+                        <h4 class="text-xs font-bold text-slate-600 border-b border-slate-200/50 pb-1">Category Custom Fields</h4>
+                        <div id="detail-custom-fields-list" class="text-xxs font-semibold text-slate-500 flex flex-col gap-1"></div>
+                    </div>
+                </div>
+
+                <div class="details-right flex flex-col gap-4">
+                    <div class="history-tabs flex gap-4 border-b border-slate-200">
+                        <button class="hist-tab px-4 py-2 font-bold text-xs border-b-2 border-transparent text-slate-500 active" onclick="app.toggleHistoryTab('history-allocs')">Allocations</button>
+                        <button class="hist-tab px-4 py-2 font-bold text-xs border-b-2 border-transparent text-slate-500" onclick="app.toggleHistoryTab('history-maint')">Maintenance</button>
+                    </div>
+
+                    <div id="history-allocs" class="history-content w-full">
+                        <ul class="timeline" id="alloc-history-timeline">
+                            <!-- Loaded via JS -->
+                        </ul>
+                    </div>
+
+                    <div id="history-maint" class="history-content hidden w-full">
+                        <ul class="timeline" id="maint-history-timeline">
+                            <!-- Loaded via JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 10: Forgot Password -->
+    <div class="modal" id="forgot-password-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-sm">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Reset Password</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('forgot-password-modal')">&times;</span>
+            </div>
+            <form id="forgot-password-form" class="flex flex-col gap-4">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="forgot-email" class="text-xs font-semibold text-slate-500">Email Address</label>
+                    <input type="email" id="forgot-email" required placeholder="name@company.com" class="border border-slate-200 rounded-xl py-2.5 px-4 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('forgot-password-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Send Reset Code</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 11: Edit Asset Category -->
+    <div class="modal" id="edit-category-modal">
+        <div class="modal-content bg-white border border-slate-200 p-6 rounded-2xl shadow-2xl flex flex-col gap-5 w-full max-w-md">
+            <div class="modal-header flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-lg font-bold text-slate-800">Edit Asset Category</h3>
+                <span class="close-modal text-xl cursor-pointer text-slate-400 hover:text-slate-600" onclick="app.closeModal('edit-category-modal')">&times;</span>
+            </div>
+            <form id="edit-category-form" class="flex flex-col gap-4">
+                <input type="hidden" id="edit-cat-id">
+                <div class="form-group flex flex-col gap-1.5">
+                    <label for="edit-cat-name" class="text-xs font-semibold text-slate-500">Category Name</label>
+                    <input type="text" id="edit-cat-name" required class="border border-slate-200 rounded-xl py-2 px-3 text-sm text-slate-800 focus:border-blue-500 focus:outline-none">
+                </div>
+                
+                <div class="form-group flex flex-col gap-2">
+                    <label class="text-xs font-semibold text-slate-500">Custom Attributes Schema</label>
+                    <div id="edit-custom-fields-builder" class="flex flex-col gap-2">
+                        <!-- Attributes added dynamically here -->
+                    </div>
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 rounded-xl border border-slate-200/50 mt-1" onclick="app.addEditSchemaFieldRow()">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Custom Attribute Field
+                    </button>
+                </div>
+
+                <div class="modal-footer flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                    <button type="button" class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-xl" onclick="app.closeModal('edit-category-modal')">Cancel</button>
+                    <button type="submit" class="btn bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JS Core -->
+    <script src="/frontend/app.js"></script>
+</body>
+</html>
