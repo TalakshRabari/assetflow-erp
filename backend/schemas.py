@@ -19,6 +19,7 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseSchema):
     name: Optional[str] = None
+    email: Optional[EmailStr] = None
     department_id: Optional[int] = None
     role: Optional[str] = None
     status: Optional[str] = None

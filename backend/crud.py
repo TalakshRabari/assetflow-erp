@@ -490,19 +490,22 @@ def create_booking(db: Session, booking: BookingCreate, user_id: int) -> Booking
             detail=f"Resource booking conflict. Slot is already booked from {overlapping.start_time.strftime('%H:%M')} to {overlapping.end_time.strftime('%H:%M')} by user ID {overlapping.user_id}."
         )
         
+    user = db.query(User).filter(User.id == user_id).first()
+    initial_status = "Pending Approval" if (user and user.role == "Employee") else "Upcoming"
+
     db_booking = Booking(
         asset_id=booking.asset_id,
         user_id=user_id,
         department_id=booking.department_id,
         start_time=booking.start_time,
         end_time=booking.end_time,
-        status="Upcoming"
+        status=initial_status
     )
     db.add(db_booking)
     db.commit()
     db.refresh(db_booking)
     
-    log_activity(db, user_id, "Book Resource", f"Booked resource {asset.asset_tag} from {booking.start_time} to {booking.end_time}")
+    log_activity(db, user_id, "Book Resource", f"Booked resource {asset.asset_tag} from {booking.start_time} to {booking.end_time} (Status: {initial_status})")
     return db_booking
 
 def cancel_booking(db: Session, booking_id: int, actor_id: int) -> Booking:
@@ -510,12 +513,31 @@ def cancel_booking(db: Session, booking_id: int, actor_id: int) -> Booking:
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
         
-    # Rules: user must be the booker, or Asset Manager / Admin
-    # This check is in endpoint, let's proceed with cancel
     booking.status = "Cancelled"
     db.commit()
     
     log_activity(db, actor_id, "Cancel Booking", f"Cancelled booking ID {booking_id}")
+    return booking
+
+def process_booking(db: Session, booking_id: int, approve: bool, actor_id: int) -> Booking:
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking request not found")
+    
+    if booking.status != "Pending Approval":
+        raise HTTPException(status_code=400, detail="Booking request has already been processed")
+        
+    if approve:
+        booking.status = "Upcoming"
+        create_notification(db, booking.user_id, f"Your booking for resource '{booking.asset.name}' has been APPROVED.")
+        log_activity(db, actor_id, "Approve Booking", f"Approved booking request ID {booking_id}")
+    else:
+        booking.status = "Cancelled"
+        create_notification(db, booking.user_id, f"Your booking for resource '{booking.asset.name}' has been REJECTED.")
+        log_activity(db, actor_id, "Reject Booking", f"Rejected booking request ID {booking_id}")
+        
+    db.commit()
+    db.refresh(booking)
     return booking
 
 # ==========================================

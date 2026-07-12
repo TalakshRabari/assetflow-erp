@@ -338,6 +338,23 @@ def cancel_booking(
         
     return crud.cancel_booking(db, booking_id, current_user.id)
 
+@app.post("/api/bookings/{booking_id}/process", response_model=schemas.BookingResponse, tags=["Bookings"])
+def process_booking(
+    booking_id: int, 
+    approve: bool = Query(...), 
+    current_user: User = Depends(require_dept_head), 
+    db: Session = Depends(get_db)
+):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking request not found")
+        
+    if current_user.role not in ("Admin", "Asset Manager"):
+        if booking.department_id != current_user.department_id and booking.user.department_id != current_user.department_id:
+            raise HTTPException(status_code=403, detail="You can only approve bookings related to your department.")
+            
+    return crud.process_booking(db, booking_id, approve, current_user.id)
+
 # ==========================================
 # MAINTENANCE ROUTER
 # ==========================================

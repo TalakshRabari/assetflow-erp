@@ -79,6 +79,7 @@ class AssetFlowApp {
         document.getElementById('create-department-form').addEventListener('submit', (e) => this.handleCreateDepartment(e));
         document.getElementById('create-category-form').addEventListener('submit', (e) => this.handleCreateCategory(e));
         document.getElementById('edit-category-form').addEventListener('submit', (e) => this.handleUpdateCategory(e));
+        document.getElementById('edit-employee-form').addEventListener('submit', (e) => this.handleUpdateEmployee(e));
         document.getElementById('forgot-password-form').addEventListener('submit', (e) => this.handleForgotPassword(e));
         
         // Export button
@@ -537,8 +538,14 @@ class AssetFlowApp {
                 const isAvailable = a.status === 'Available';
                 
                 let actionBtnHtml = '';
-                if (isManager && isAvailable) {
-                    actionBtnHtml = `<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 px-3 rounded-lg shadow-sm flex-1" onclick="app.showAllocateModal(${a.id}, '${a.name}')">Allocate</button>`;
+                if (isAvailable) {
+                    if (isManager) {
+                        actionBtnHtml = `<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 px-3 rounded-lg shadow-sm flex-1" onclick="app.showAllocateModal(${a.id}, '${a.name}')">Allocate</button>`;
+                    } else {
+                        actionBtnHtml = `<button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-2 px-3 rounded-lg shadow-sm flex-1" onclick="app.showAllocateModal(${a.id}, '${a.name}')">Request Asset</button>`;
+                    }
+                } else if (!isAvailable && !isManager && a.status !== 'Lost' && a.status !== 'Retired' && a.status !== 'Disposed') {
+                    actionBtnHtml = `<button class="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs py-2 px-3 rounded-lg shadow-sm flex-1" onclick="app.showAllocateModal(${a.id}, '${a.name}')">Join Queue</button>`;
                 }
 
                 const photoHtml = a.custom_values && a.custom_values.photo_url
@@ -695,7 +702,6 @@ class AssetFlowApp {
 
             if (Object.keys(grouped).length === 0) {
                 timeline.innerHTML = '<div class="text-center py-8 text-slate-400 font-semibold">No reservations recorded. Book a resource to begin.</div>';
-                return;
             }
 
             for (const [rId, resource] of Object.entries(grouped)) {
@@ -710,9 +716,16 @@ class AssetFlowApp {
                     const now = new Date();
                     
                     const isOngoing = now >= start && now <= end;
-                    const slotStatus = isOngoing ? 'slot-ongoing' : 'slot-upcoming';
-                    const booker = slot.user ? slot.user.name : 'Staff';
+                    const isPending = slot.status === 'Pending Approval';
                     
+                    let slotClass = isOngoing ? 'slot-ongoing' : 'slot-upcoming';
+                    let statusLabel = isOngoing ? 'Ongoing' : 'Upcoming';
+                    if (isPending) {
+                        slotClass = 'bg-orange-100/80 text-orange-700 border border-orange-200';
+                        statusLabel = 'Pending Approval';
+                    }
+                    
+                    const booker = slot.user ? slot.user.name : 'Staff';
                     const timeStr = `${start.toLocaleDateString()} ${start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
                     
                     // Show cancel button if owner or manager
@@ -722,9 +735,9 @@ class AssetFlowApp {
                     }
 
                     slotsHtml += `
-                        <div class="time-slot-badge ${slotStatus}">
+                        <div class="time-slot-badge ${slotClass}">
                             <i class="fa-solid fa-clock"></i>
-                            <span>${timeStr} (Booked by ${booker})</span>
+                            <span>${timeStr} (Booked by ${booker} - ${statusLabel})</span>
                             ${cancelBtn}
                         </div>
                     `;
@@ -740,6 +753,46 @@ class AssetFlowApp {
                         </div>
                     </div>
                 `;
+            }
+
+            // Render pending booking approvals if user is a manager/head
+            const isManager = this.user.role === 'Admin' || this.user.role === 'Asset Manager' || this.user.role === 'Department Head';
+            const pendingPanel = document.querySelector('.booking-approvals-panel');
+            if (isManager && pendingPanel) {
+                pendingPanel.classList.remove('hidden');
+                const pTbody = document.querySelector('#booking-approvals-table tbody');
+                pTbody.innerHTML = '';
+                
+                const pendingBookings = bookings.filter(b => b.status === 'Pending Approval');
+                if (pendingBookings.length === 0) {
+                    pTbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 font-semibold">No pending booking requests.</td></tr>';
+                } else {
+                    pendingBookings.forEach(b => {
+                        const resourceName = b.asset ? `${b.asset.name} (${b.asset.asset_tag})` : 'Unknown';
+                        const requestedBy = b.user ? b.user.name : 'Unknown';
+                        const start = new Date(b.start_time).toLocaleString();
+                        const end = new Date(b.end_time).toLocaleString();
+                        const deptName = b.department ? b.department.name : (b.user && b.user.department_id ? 'Employee Dept' : 'General');
+                        
+                        pTbody.innerHTML += `
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="p-3 font-semibold text-slate-800">${resourceName}</td>
+                                <td class="p-3 font-semibold text-slate-600">${requestedBy}</td>
+                                <td class="p-3 text-slate-500 font-medium">${start}</td>
+                                <td class="p-3 text-slate-500 font-medium">${end}</td>
+                                <td class="p-3 text-slate-500 font-medium">${deptName}</td>
+                                <td class="p-3">
+                                    <div class="flex gap-2">
+                                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg" onclick="app.processBookingApproval(${b.id}, true)">Approve</button>
+                                        <button class="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg" onclick="app.processBookingApproval(${b.id}, false)">Reject</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            } else if (pendingPanel) {
+                pendingPanel.classList.add('hidden');
             }
         } catch (err) {
             console.error(err);
@@ -991,18 +1044,15 @@ class AssetFlowApp {
                 const deptName = u.department_id ? depts.find(d => d.id === u.department_id)?.name || 'Unassigned' : 'Unassigned';
                 const isMe = u.id === this.user.id;
                 
-                let selectHtml = '';
+                let actionHtml = '';
                 if (!isMe) {
-                    selectHtml = `
-                        <select onchange="app.promoteEmployee(${u.id}, this.value)" class="border border-slate-200 rounded-lg py-1 px-2 text-xs text-slate-700 bg-white focus:outline-none cursor-pointer">
-                            <option value="Employee" ${u.role === 'Employee' ? 'selected' : ''}>Employee</option>
-                            <option value="Department Head" ${u.role === 'Department Head' ? 'selected' : ''}>Dept Head</option>
-                            <option value="Asset Manager" ${u.role === 'Asset Manager' ? 'selected' : ''}>Asset Manager</option>
-                            <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                        </select>
+                    actionHtml = `
+                        <button class="bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs py-1.5 px-3 rounded-lg transition-all" onclick="app.showEditEmployeeModal(${u.id}, '${u.name.replace(/'/g, "\\'")}', '${u.email}', '${u.role}', ${u.department_id || 'null'}, '${u.status}')">
+                            Edit Details
+                        </button>
                     `;
                 } else {
-                    selectHtml = `<span class="text-slate-400 font-semibold text-xs">Self (Locked)</span>`;
+                    actionHtml = `<span class="text-slate-400 font-semibold text-xs">Self (Locked)</span>`;
                 }
 
                 tbody.innerHTML += `
@@ -1012,7 +1062,7 @@ class AssetFlowApp {
                         <td class="p-4 font-semibold text-slate-600">${deptName}</td>
                         <td class="p-4"><span class="status-badge badge-Allocated">${u.role}</span></td>
                         <td class="p-4"><span class="status-badge badge-Available">${u.status}</span></td>
-                        <td class="p-4">${selectHtml}</td>
+                        <td class="p-4">${actionHtml}</td>
                     </tr>
                 `;
             });
@@ -1021,13 +1071,56 @@ class AssetFlowApp {
         }
     }
 
-    async promoteEmployee(userId, newRole) {
+    async showEditEmployeeModal(userId, name, email, role, departmentId, status) {
+        document.getElementById('edit-emp-id').value = userId;
+        document.getElementById('edit-emp-name').value = name;
+        document.getElementById('edit-emp-email').value = email;
+        document.getElementById('edit-emp-role').value = role;
+        document.getElementById('edit-emp-status').value = status;
+        
         try {
-            await this.apiCall(`/api/auth/users/${userId}`, 'PUT', { role: newRole });
-            this.showToast('User role updated successfully', 'success');
+            const depts = await this.apiCall('/api/org/departments', 'GET');
+            const select = document.getElementById('edit-emp-dept');
+            select.innerHTML = '<option value="">No Department</option>';
+            depts.forEach(d => {
+                select.innerHTML += `<option value="${d.id}" ${d.id === departmentId ? 'selected' : ''}>${d.name}</option>`;
+            });
+        } catch (err) {
+            console.error(err);
+        }
+        
+        this.showModal('edit-employee-modal');
+    }
+
+    async handleUpdateEmployee(e) {
+        e.preventDefault();
+        const userId = parseInt(document.getElementById('edit-emp-id').value);
+        const name = document.getElementById('edit-emp-name').value;
+        const email = document.getElementById('edit-emp-email').value;
+        const role = document.getElementById('edit-emp-role').value;
+        const status = document.getElementById('edit-emp-status').value;
+        const deptVal = document.getElementById('edit-emp-dept').value;
+        const department_id = deptVal ? parseInt(deptVal) : null;
+
+        try {
+            await this.apiCall(`/api/auth/users/${userId}`, 'PUT', {
+                name, email, role, department_id, status
+            });
+            this.showToast('Employee details updated successfully', 'success');
+            this.closeModal('edit-employee-modal');
             this.loadEmployees();
         } catch (err) {
-            this.showToast('Failed to promote user', 'error');
+            this.showToast(err.detail || 'Details update failed', 'error');
+        }
+    }
+
+    async processBookingApproval(bookingId, approve) {
+        try {
+            await this.apiCall(`/api/bookings/${bookingId}/process?approve=${approve}`, 'POST');
+            this.showToast(approve ? 'Booking request approved!' : 'Booking request rejected.', 'success');
+            this.loadBookings();
+        } catch (err) {
+            this.showToast(err.detail || 'Failed to process booking request', 'error');
         }
     }
 
@@ -1350,6 +1443,35 @@ class AssetFlowApp {
     showAllocateModal(assetId, assetName) {
         document.getElementById('alloc-asset-id').value = assetId;
         document.getElementById('alloc-asset-name').value = assetName;
+        
+        const isManager = this.user.role === 'Admin' || this.user.role === 'Asset Manager';
+        const userGroup = document.getElementById('alloc-user-group');
+        const deptGroup = document.getElementById('alloc-dept-group');
+        const targetType = document.getElementById('alloc-target-type');
+        
+        if (!isManager) {
+            targetType.value = 'user';
+            targetType.disabled = true;
+            userGroup.classList.remove('hidden');
+            deptGroup.classList.add('hidden');
+            
+            const userSelect = document.getElementById('alloc-user-select');
+            userSelect.value = this.user.id;
+            userSelect.disabled = true;
+            
+            const submitBtn = document.querySelector('#allocate-asset-form button[type="submit"]');
+            if (submitBtn) submitBtn.innerText = 'Request Allocation';
+            const modalHeader = document.querySelector('#allocate-asset-modal h3');
+            if (modalHeader) modalHeader.innerText = 'Request Asset Allocation';
+        } else {
+            targetType.disabled = false;
+            document.getElementById('alloc-user-select').disabled = false;
+            const submitBtn = document.querySelector('#allocate-asset-form button[type="submit"]');
+            if (submitBtn) submitBtn.innerText = 'Confirm Allocation';
+            const modalHeader = document.querySelector('#allocate-asset-modal h3');
+            if (modalHeader) modalHeader.innerText = 'Allocate Asset';
+        }
+
         this.showModal('allocate-asset-modal');
     }
 
@@ -1391,10 +1513,11 @@ class AssetFlowApp {
         const expected_return_date = returnDateVal ? new Date(returnDateVal).toISOString() : null;
 
         try {
-            await this.apiCall('/api/allocations', 'POST', {
+            const result = await this.apiCall('/api/allocations', 'POST', {
                 asset_id, user_id, department_id, expected_return_date
             });
-            this.showToast('Asset allocated successfully', 'success');
+            const msg = result.status === 'Queued' ? 'Request added to FCFS queue successfully!' : 'Asset allocation approved successfully!';
+            this.showToast(msg, 'success');
             this.closeModal('allocate-asset-modal');
             this.loadAssets();
         } catch (err) {
