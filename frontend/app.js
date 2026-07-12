@@ -1449,15 +1449,21 @@ class AssetFlowApp {
         const deptGroup = document.getElementById('alloc-dept-group');
         const targetType = document.getElementById('alloc-target-type');
         
+        // Reset view states
+        targetType.value = 'user';
+        userGroup.classList.remove('hidden');
+        deptGroup.classList.add('hidden');
+        
         if (!isManager) {
-            targetType.value = 'user';
-            targetType.disabled = true;
-            userGroup.classList.remove('hidden');
-            deptGroup.classList.add('hidden');
+            targetType.disabled = false; // Let employees select between Employee and Department
             
             const userSelect = document.getElementById('alloc-user-select');
             userSelect.value = this.user.id;
-            userSelect.disabled = true;
+            userSelect.disabled = true; // Lock to self
+            
+            const deptSelect = document.getElementById('alloc-dept-select');
+            deptSelect.value = this.user.department_id || '';
+            deptSelect.disabled = true; // Lock to self department
             
             const submitBtn = document.querySelector('#allocate-asset-form button[type="submit"]');
             if (submitBtn) submitBtn.innerText = 'Request Allocation';
@@ -1466,6 +1472,7 @@ class AssetFlowApp {
         } else {
             targetType.disabled = false;
             document.getElementById('alloc-user-select').disabled = false;
+            document.getElementById('alloc-dept-select').disabled = false;
             const submitBtn = document.querySelector('#allocate-asset-form button[type="submit"]');
             if (submitBtn) submitBtn.innerText = 'Confirm Allocation';
             const modalHeader = document.querySelector('#allocate-asset-modal h3');
